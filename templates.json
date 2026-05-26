@@ -1,0 +1,88 @@
+{
+  "templates": [
+    {
+      "id": "auto",
+      "name": "Auto-detect (generic)",
+      "description": "Claude reads headers from the document automatically",
+      "columns": []
+    },
+
+    {
+      "id": "ms_prestart",
+      "name": "MS Pre-start Checks",
+      "description": "Platform A/B safety check — machine check table + picker check table combined",
+      "row_orientation": "horizontal",
+      "document_info_fields": ["doc_ref", "date", "day_no", "location", "supervisor"],
+      "note": "This form has TWO tables. Top table = machine gate sensor check (SIDE 1/2). Bottom table = picker gate sensor check (L/R Side) + picker details. Extract all rows from both tables. Blank first column = row_label (Platform A / Platform B). Top table rows will have null values for bottom-table-only columns and vice versa.",
+      "columns": [
+        { "key": "Table_Section",                      "label": "Table section (Machine Check or Picker Check)" },
+        { "key": "Emergency_Stop_Check_Result",        "label": "Emergency stop check: Result" },
+        { "key": "GateSensor_Side1_Front",             "label": "Gate sensor check result: SIDE 1 (Front)" },
+        { "key": "GateSensor_Side1_Back",              "label": "Gate sensor check result: SIDE 1 (Back)" },
+        { "key": "GateSensor_Side2_Front",             "label": "Gate sensor check result: SIDE 2 (Front)" },
+        { "key": "GateSensor_Side2_Back",              "label": "Gate sensor check result: SIDE 2 (Back)" },
+        { "key": "GateSensor_L_Side_Front",            "label": "Gate sensor - Check result: L Side (Front)" },
+        { "key": "GateSensor_L_Side_Back",             "label": "Gate sensor - Check result: L Side (Back)" },
+        { "key": "GateSensor_R_Side_Front",            "label": "Gate sensor - Check result: R Side (Front)" },
+        { "key": "GateSensor_R_Side_Back",             "label": "Gate sensor - Check result: R Side (Back)" },
+        { "key": "Pickers_Name",                       "label": "Picker's Name" },
+        { "key": "Pickers_Signature",                  "label": "Picker's Signature" },
+        { "key": "All_Glass_Hard_Plastic_Intact",      "label": "All glass & Hard Plastic items intact & free from damage" },
+        { "key": "Start_of_Shift",                     "label": "Start of shift" },
+        { "key": "End_of_Shift",                       "label": "End of shift" },
+        { "key": "Initials",                           "label": "Initials" }
+      ]
+    },
+
+    {
+      "id": "hughes_daily_picking",
+      "name": "Hughes Group — Daily Picking Record",
+      "description": "Product quantities to Intake Chill — Amount + Punnet Traceability per product, then 3Kg bulk",
+      "row_orientation": "horizontal",
+      "document_info_fields": ["doc_ref", "date", "supervisor"],
+      "note": "No row label column. Each data row = one harvest batch entry. Punnet Traceability column always immediately follows its paired Amount column.",
+      "columns": [
+        { "key": "300g_Coop_Cup_Amount",                    "label": "300g Coop Cup: Amount" },
+        { "key": "300g_Coop_Cup_Punnet_Traceability",       "label": "300g Coop Cup: Punnet Traceability" },
+        { "key": "400g_Aldi_Cup_Amount",                    "label": "400g Aldi Cup: Amount" },
+        { "key": "400g_Aldi_Cup_Punnet_Traceability",       "label": "400g Aldi Cup: Punnet Traceability" },
+        { "key": "300g_Tesco_Amount",                       "label": "300g Tesco: Amount" },
+        { "key": "300g_Tesco_Punnet_Traceability",          "label": "300g Tesco: Punnet Traceability" },
+        { "key": "400g_Tesco_Amount",                       "label": "400g Tesco: Amount" },
+        { "key": "400g_Tesco_Punnet_Traceability",          "label": "400g Tesco: Punnet Traceability" },
+        { "key": "200g_Buttons_Aldi_Amount",                "label": "200g Buttons Aldi: Amount" },
+        { "key": "200g_Buttons_Aldi_Punnet_Traceability",   "label": "200g Buttons Aldi: Punnet Traceability" },
+        { "key": "200g_Buttons_Tesco_Amount",               "label": "200g Buttons Tesco: Amount" },
+        { "key": "200g_Buttons_Tesco_Punnet_Traceability",  "label": "200g Buttons Tesco: Punnet Traceability" },
+        { "key": "3Kg_Buttons",                             "label": "3Kg Buttons" },
+        { "key": "3Kg_Cup",                                 "label": "3Kg Cup" },
+        { "key": "3Kg_Upgrade",                             "label": "3Kg Upgrade" }
+      ]
+    },
+
+    {
+      "id": "non_pick_time",
+      "name": "Non-Pick Time Record",
+      "description": "Daily non-pick time log — Date through to Non Pick time Mins",
+      "row_orientation": "horizontal",
+      "document_info_fields": [],
+      "note": "All 14 columns are data columns. No separate row label column. Header row has dark background with white text.",
+      "columns": [
+        { "key": "Date",               "label": "Date" },
+        { "key": "Week_End",           "label": "Week End" },
+        { "key": "House_Fill_ID",      "label": "House Fill ID" },
+        { "key": "House",              "label": "House" },
+        { "key": "Platform",           "label": "Platform" },
+        { "key": "Flush",              "label": "Flush" },
+        { "key": "Day_No",             "label": "Day No" },
+        { "key": "Picker",             "label": "Picker" },
+        { "key": "Payroll_No",         "label": "Payroll No" },
+        { "key": "System",             "label": "System" },
+        { "key": "Picking_Placing",    "label": "Picking / Placing" },
+        { "key": "Start",              "label": "Start" },
+        { "key": "End",                "label": "End" },
+        { "key": "Non_Pick_Time_Mins", "label": "Non Pick time Mins" }
+      ]
+    }
+  ]
+}

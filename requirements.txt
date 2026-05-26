@@ -1,0 +1,12 @@
+flask==3.0.3
+anthropic==0.40.0
+pdf2image==1.17.0
+Pillow==11.3.0
+python-dotenv==1.0.1
+werkzeug==3.0.6
+openpyxl==3.1.5
+flask-sqlalchemy==3.1.1
+flask-login==0.6.3
+flask-bcrypt==1.0.1
+psycopg2-binary==2.9.10
+flask-migrate==4.0.7

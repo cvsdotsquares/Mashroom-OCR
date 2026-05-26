@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mashroom OCR — Admin: Users</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #2d6a4f; --green-l: #52b788; --green-xl: #d8f3dc;
+      --red: #e63946; --grey: #f8f9fa; --border: #dee2e6; --text: #212529;
+      --muted: #6c757d; --radius: 10px; --shadow: 0 2px 16px rgba(0,0,0,.08);
+    }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           background: var(--grey); color: var(--text); min-height: 100vh; }
+    header { background: var(--green); color: #fff; padding: 1rem 2rem;
+             display: flex; align-items: center; gap: 1rem; }
+    header .logo { font-size: 2rem; }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: .85rem; opacity: .85; margin-top: .15rem; }
+    header nav { margin-left: auto; display: flex; align-items: center; gap: 1.25rem; }
+    header nav a { color: rgba(255,255,255,.85); text-decoration: none;
+                   font-size: .9rem; font-weight: 600; }
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 1.75rem 2rem; margin-bottom: 1.75rem; }
+    .card h2 { font-size: 1.05rem; font-weight: 700; color: var(--green); margin-bottom: 1.25rem; }
+    .alert-error { background: #fde8e8; color: var(--red); border: 1px solid #f9b8b8;
+                   padding: .75rem 1rem; border-radius: 8px; font-size: .88rem; margin-bottom: 1rem; }
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    thead th { background: var(--green); color: #fff; padding: .65rem 1rem;
+               text-align: left; font-weight: 600; }
+    tbody tr:nth-child(even) { background: var(--grey); }
+    tbody tr:hover { background: var(--green-xl); }
+    tbody td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .badge-admin { display: inline-block; padding: .15rem .55rem; border-radius: 4px;
+                   font-size: .78rem; font-weight: 700; background: #fff3cd; color: #856404; }
+    .badge-user  { display: inline-block; padding: .15rem .55rem; border-radius: 4px;
+                   font-size: .78rem; font-weight: 600; background: var(--green-xl); color: var(--green); }
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: .75rem; align-items: end; }
+    label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: .3rem; color: var(--muted); }
+    input[type="email"], input[type="password"] {
+      width: 100%; padding: .55rem .8rem; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: .9rem; }
+    input:focus { outline: none; border-color: var(--green-l); }
+    .checkbox-row { display: flex; align-items: center; gap: .4rem;
+                    font-size: .88rem; font-weight: 600; padding-bottom: .1rem; }
+    .btn { display: inline-flex; align-items: center; gap: .35rem; padding: .55rem 1.1rem;
+           border: none; border-radius: 7px; font-size: .88rem; font-weight: 700;
+           cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-danger  { background: #fde8e8; color: var(--red); border: 1px solid #f9b8b8; }
+    .btn-danger:hover  { background: #f9b8b8; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+<header>
+  <span class="logo">🍄</span>
+  <div>
+    <h1>Mashroom OCR</h1>
+    <p>Admin Panel</p>
+  </div>
+  <nav>
+    <a href="/">⚡ App</a>
+    <a href="/history">📂 History</a>
+    <a href="/logout">Sign Out</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Create user -->
+  <div class="card">
+    <h2>➕ Create New User</h2>
+    {% if error %}
+    <div class="alert-error">⚠ {{ error }}</div>
+    {% endif %}
+    <form method="post" action="/admin/users/create">
+      <div class="form-grid">
+        <div>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required placeholder="user@example.com" />
+        </div>
+        <div>
+          <label for="password">Password (min 8 chars)</label>
+          <input type="password" id="password" name="password" required placeholder="••••••••" />
+        </div>
+        <div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="is_admin" name="is_admin" />
+            <label for="is_admin" style="margin:0;">Admin?</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:.5rem;width:100%;">
+            Create
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- User list -->
+  <div class="card">
+    <h2>👥 All Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Created</th>
+          <th>Jobs</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ u.email }}</strong>
+            {% if u.id == current_user.id %}
+            <span style="font-size:.75rem;color:var(--muted);"> (you)</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.is_admin %}
+            <span class="badge-admin">Admin</span>
+            {% else %}
+            <span class="badge-user">User</span>
+            {% endif %}
+          </td>
+          <td>{{ u.created_at.strftime('%d %b %Y') }}</td>
+          <td>{{ u.jobs | length }}</td>
+          <td>
+            {% if u.id != current_user.id %}
+            <form method="post" action="/admin/users/{{ u.id }}/delete"
+                  onsubmit="return confirm('Delete {{ u.email }} and all their jobs?')">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+            {% else %}
+            <span style="color:var(--muted);font-size:.82rem;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</body>
+</html>

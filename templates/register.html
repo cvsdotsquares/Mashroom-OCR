@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mashroom OCR — Register</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #2d6a4f; --green-l: #52b788; --green-xl: #d8f3dc;
+      --red: #e63946; --grey: #f8f9fa; --border: #dee2e6; --text: #212529;
+      --muted: #6c757d; --radius: 10px; --shadow: 0 2px 16px rgba(0,0,0,.08);
+    }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           background: var(--grey); color: var(--text); min-height: 100vh;
+           display: flex; flex-direction: column; }
+    header { background: var(--green); color: #fff; padding: 1rem 2rem;
+             display: flex; align-items: center; gap: 1rem; }
+    header .logo { font-size: 2rem; }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: .85rem; opacity: .85; margin-top: .15rem; }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 2.25rem 2rem; width: 100%; max-width: 400px; }
+    .card h2 { font-size: 1.2rem; font-weight: 700; color: var(--green);
+               margin-bottom: 1.5rem; text-align: center; }
+    label { display: block; font-size: .88rem; font-weight: 600; margin-bottom: .35rem; }
+    input[type="email"], input[type="password"] {
+      width: 100%; padding: .6rem .85rem; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: .95rem; margin-bottom: 1rem; }
+    input:focus { outline: none; border-color: var(--green-l); }
+    .hint { font-size: .78rem; color: var(--muted); margin-top: -.75rem; margin-bottom: 1rem; }
+    .btn { width: 100%; padding: .7rem; border: none; border-radius: 8px;
+           font-size: 1rem; font-weight: 700; cursor: pointer;
+           background: var(--green); color: #fff; margin-top: .25rem; }
+    .btn:hover { filter: brightness(1.1); }
+    .alert-error { background: #fde8e8; color: var(--red); border: 1px solid #f9b8b8;
+                   padding: .75rem 1rem; border-radius: 8px; font-size: .88rem; margin-bottom: 1rem; }
+    .footer-link { text-align: center; margin-top: 1.25rem; font-size: .88rem; color: var(--muted); }
+    .footer-link a { color: var(--green); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+<header>
+  <span class="logo">🍄</span>
+  <div>
+    <h1>Mashroom OCR</h1>
+    <p>Handwritten Picking-Record Extractor</p>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <h2>✨ Create Account</h2>
+    {% if error %}
+    <div class="alert-error">⚠ {{ error }}</div>
+    {% endif %}
+    <form method="post" action="/register">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required autofocus
+             placeholder="you@example.com" />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required
+             placeholder="Minimum 8 characters" />
+      <p class="hint">At least 8 characters</p>
+      <label for="confirm">Confirm Password</label>
+      <input type="password" id="confirm" name="confirm" required
+             placeholder="Repeat password" />
+      <button type="submit" class="btn">Create Account</button>
+    </form>
+    <div class="footer-link">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

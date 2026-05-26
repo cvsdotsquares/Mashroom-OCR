@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mashroom OCR — Job History</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #2d6a4f; --green-l: #52b788; --green-xl: #d8f3dc;
+      --grey: #f8f9fa; --border: #dee2e6; --text: #212529;
+      --muted: #6c757d; --radius: 10px; --shadow: 0 2px 16px rgba(0,0,0,.08);
+    }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           background: var(--grey); color: var(--text); min-height: 100vh; }
+    header { background: var(--green); color: #fff; padding: 1rem 2rem;
+             display: flex; align-items: center; gap: 1rem; }
+    header .logo { font-size: 2rem; }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: .85rem; opacity: .85; margin-top: .15rem; }
+    header nav { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+    header nav a { color: rgba(255,255,255,.85); text-decoration: none; font-size: .9rem; font-weight: 600; }
+    header nav a:hover { color: #fff; }
+    main { max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 1.75rem 2rem; margin-bottom: 1.75rem; }
+    .card h2 { font-size: 1.05rem; font-weight: 700; color: var(--green);
+               margin-bottom: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    thead th { background: var(--green); color: #fff; padding: .65rem 1rem;
+               text-align: left; font-weight: 600; }
+    tbody tr:nth-child(even) { background: var(--grey); }
+    tbody tr:hover { background: var(--green-xl); }
+    tbody td { padding: .6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .btn { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .85rem;
+           border: none; border-radius: 6px; font-size: .85rem; font-weight: 600;
+           cursor: pointer; text-decoration: none; }
+    .btn-view  { background: var(--green-xl); color: var(--green); }
+    .btn-excel { background: #1d6f42; color: #fff; }
+    .btn-view:hover  { filter: brightness(.93); }
+    .btn-excel:hover { filter: brightness(1.12); }
+    .empty { text-align: center; color: var(--muted); padding: 2.5rem; }
+    .tpl-badge { display: inline-block; padding: .15rem .55rem; border-radius: 4px;
+                 font-size: .78rem; font-weight: 600; background: var(--green-xl); color: var(--green); }
+  </style>
+</head>
+<body>
+<header>
+  <span class="logo">🍄</span>
+  <div>
+    <h1>Mashroom OCR</h1>
+    <p>Handwritten Picking-Record Extractor</p>
+  </div>
+  <nav>
+    <a href="/">⚡ New Upload</a>
+    <a href="/logout">Sign Out</a>
+  </nav>
+</header>
+
+<main>
+  <div class="card">
+    <h2>📂 Job History</h2>
+    {% if jobs %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Filename</th>
+          <th>Template</th>
+          <th>Date / Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ job.filename }}</strong></td>
+          <td>
+            <span class="tpl-badge">
+              {{ (templates | selectattr('id', 'equalto', job.template_id) | list | first).name
+                 if (templates | selectattr('id', 'equalto', job.template_id) | list)
+                 else job.template_id or 'auto' }}
+            </span>
+          </td>
+          <td>{{ job.created_at.strftime('%d %b %Y  %H:%M') }}</td>
+          <td style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <a class="btn btn-view"  href="/results/{{ job.id }}">👁 View</a>
+            <a class="btn btn-excel" href="/download_excel/{{ job.id }}">📊 Excel</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No jobs yet. <a href="/" style="color:var(--green);font-weight:600;">Upload your first document →</a></p>
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mashroom OCR — Handwritten Data Extractor</title>
+  <style>
+    /* ── Reset & base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #2d6a4f;
+      --green-l: #52b788;
+      --green-xl:#d8f3dc;
+      --amber:   #f4a261;
+      --red:     #e63946;
+      --grey:    #f8f9fa;
+      --border:  #dee2e6;
+      --text:    #212529;
+      --muted:   #6c757d;
+      --radius:  10px;
+      --shadow:  0 2px 16px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--grey);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    header {
+      background: var(--green);
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    header .logo { font-size: 2rem; }
+    header h1   { font-size: 1.4rem; font-weight: 700; letter-spacing: .02em; }
+    header p    { font-size: .85rem; opacity: .85; margin-top: .15rem; }
+
+    /* ── Main layout ─────────────────────────────────────────────── */
+    main { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
+
+    /* ── Card ────────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.75rem;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    /* ── Upload zone ─────────────────────────────────────────────── */
+    .drop-zone {
+      border: 2.5px dashed var(--green-l);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      background: var(--green-xl);
+      border-color: var(--green);
+    }
+    .drop-zone .icon { font-size: 3rem; margin-bottom: .6rem; }
+    .drop-zone p  { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+    .drop-zone strong { color: var(--text); }
+
+    #file-input { display: none; }
+
+    .file-info {
+      margin-top: 1rem;
+      padding: .6rem 1rem;
+      background: var(--green-xl);
+      border-radius: 6px;
+      font-size: .9rem;
+      display: none;
+    }
+    .file-info.visible { display: flex; align-items: center; gap: .5rem; }
+
+    /* ── Button ──────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .65rem 1.4rem;
+      border: none;
+      border-radius: 7px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary   { background: var(--green);   color: #fff; }
+    .btn-secondary { background: var(--green-xl); color: var(--green); }
+    .btn-excel     { background: #1d6f42; color: #fff; text-decoration: none; }
+    .btn-excel:hover { filter: brightness(1.12); }
+    .btn-primary:hover   { filter: brightness(1.1); }
+    .btn-secondary:hover { filter: brightness(.95); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn-row { display: flex; gap: .75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+
+    /* ── Error / info alert ──────────────────────────────────────── */
+    .alert {
+      padding: .85rem 1.2rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      margin-bottom: 1rem;
+    }
+    .alert-error { background: #fde8e8; color: var(--red); border: 1px solid #f9b8b8; }
+    .alert-info  { background: var(--green-xl); color: var(--green); }
+
+    /* ── Spinner ─────────────────────────────────────────────────── */
+    .spinner-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 2rem 0;
+    }
+    .spinner-wrap.visible { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 5px solid var(--green-xl);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Summary grid ────────────────────────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+    }
+    .summary-item {
+      background: var(--grey);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+    }
+    .summary-item .label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .summary-item .value { font-size: 1rem; font-weight: 600; margin-top: .2rem; }
+
+    /* ── Table ───────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .87rem;
+      white-space: nowrap;
+    }
+    thead th {
+      background: var(--green);
+      color: #fff;
+      padding: .65rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:nth-child(even) { background: var(--grey); }
+    tbody tr:hover           { background: var(--green-xl); }
+    tbody td {
+      padding: .55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .badge-a { background: #d1ecf1; color: #0c5460; }
+    .badge-b { background: #fff3cd; color: #856404; }
+    .badge-c { background: #f8d7da; color: #721c24; }
+    .badge-other { background: #e2e3e5; color: #383d41; }
+
+    .qty-cell {
+      font-family: "Courier New", monospace;
+      font-weight: 600;
+      text-align: right;
+    }
+    .qty-ambiguous { color: var(--amber); }
+    .qty-empty     { color: #ccc; }
+
+    /* ── Tabs ────────────────────────────────────────────────────── */
+    .tabs { display: flex; gap: .3rem; margin-bottom: -1px; }
+    .tab {
+      padding: .55rem 1.1rem;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      background: var(--grey);
+      cursor: pointer;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: background .15s;
+    }
+    .tab.active { background: #fff; color: var(--green); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── JSON viewer ─────────────────────────────────────────────── */
+    .json-wrap {
+      background: #1e1e2e;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      overflow: auto;
+      max-height: 520px;
+      position: relative;
+    }
+    .json-wrap pre {
+      color: #cdd6f4;
+      font-family: "Courier New", monospace;
+      font-size: .82rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .copy-btn {
+      position: absolute;
+      top: .75rem;
+      right: .75rem;
+      background: rgba(255,255,255,.1);
+      color: #cdd6f4;
+      border: none;
+      border-radius: 6px;
+      padding: .3rem .7rem;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* ── Page badge ──────────────────────────────────────────────── */
+    .page-label {
+      display: inline-block;
+      font-size: .75rem;
+      background: var(--green-xl);
+      color: var(--green);
+      border-radius: 4px;
+      padding: .1rem .45rem;
+      margin-left: .4rem;
+      vertical-align: middle;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      main { padding: 0 .75rem 3rem; }
+      .card { padding: 1.25rem 1rem; }
+      header { padding: .75rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🍄</span>
+  <div>
+    <h1>Mashroom OCR</h1>
+    <p>Handwritten Picking-Record Extractor — powered by DotSquares</p>
+  </div>
+  <nav style="margin-left:auto;display:flex;align-items:center;gap:1.25rem;">
+    <a href="/history" style="color:rgba(255,255,255,.85);text-decoration:none;font-size:.9rem;font-weight:600;">📂 History</a>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <a href="{{ url_for('admin.users') }}" style="color:rgba(255,255,255,.85);text-decoration:none;font-size:.9rem;font-weight:600;">⚙ Admin</a>
+    {% endif %}
+    <span style="color:rgba(255,255,255,.6);font-size:.85rem;">{{ current_user.email }}</span>
+    <a href="/logout" style="color:rgba(255,255,255,.85);text-decoration:none;font-size:.9rem;font-weight:600;">Sign Out</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── Error alert ─────────────────────────────────────────────── -->
+  {% if error %}
+  <div class="alert alert-error">⚠ {{ error }}</div>
+  {% endif %}
+
+  <!-- ── Upload card ─────────────────────────────────────────────── -->
+  <div class="card">
+    <h2>📂 Upload Document</h2>
+
+    <form id="upload-form" method="post" action="/upload" enctype="multipart/form-data"
+          onsubmit="showSpinner()">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📄</div>
+        <strong>Click to browse or drag & drop a file here</strong>
+        <p>Supports PDF, PNG, JPG, TIFF, BMP, WebP &mdash; up to 50 MB</p>
+      </div>
+
+      <input type="file" id="file-input" name="file"
+             accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif,.bmp,.webp"
+             onchange="onFileSelected(this)" />
+
+      <div class="file-info" id="file-info">
+        <span>📎</span>
+        <span id="file-name"></span>
+        <span id="file-size" style="color:var(--muted);margin-left:auto;"></span>
+      </div>
+
+      <!-- Template selector -->
+      {% if templates %}
+      <div style="margin-top:1rem;">
+        <label for="template-select" style="font-weight:600;font-size:.9rem;display:block;margin-bottom:.4rem;">
+          📋 Document Template
+        </label>
+        <select id="template-select" name="template_id"
+                style="width:100%;padding:.55rem .75rem;border:1.5px solid var(--border);
+                       border-radius:8px;font-size:.95rem;background:#fff;cursor:pointer;">
+          {% for t in templates %}
+          <option value="{{ t.id }}" {% if t.id == 'auto' %}selected{% endif %}>
+            {{ t.name }}{% if t.description %} — {{ t.description }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.3rem;">
+          Select a template for guaranteed column names, or use Auto-detect.
+        </p>
+      </div>
+      {% endif %}
+
+      <div class="spinner-wrap" id="spinner">
+        <div class="spinner"></div>
+        <p>Extracting handwritten data with Claude Vision&hellip; this may take 15&ndash;30 seconds.</p>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+          ⚡ Extract Data
+        </button>
+        {% if filename %}
+        <a href="/" class="btn btn-secondary">↩ Upload Another</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Results ─────────────────────────────────────────────────── -->
+  {% if filename %}
+
+  <!-- Document summary -->
+  <div class="card">
+    <h2>📋 Document Summary
+      <span style="font-size:.8rem;font-weight:400;color:var(--muted);margin-left:.5rem;">
+        {{ filename }}
+      </span>
+    </h2>
+    {% if summary %}
+    <div class="summary-grid">
+      {% for key, val in summary.items() %}
+      {% if key != 'additional_fields' and val %}
+      <div class="summary-item">
+        <div class="label">{{ key | replace('_', ' ') | title }}</div>
+        <div class="value">{{ val }}</div>
+      </div>
+      {% endif %}
+      {% endfor %}
+      {% if summary.additional_fields %}
+        {% for key, val in summary.additional_fields.items() %}
+        {% if val %}
+        <div class="summary-item">
+          <div class="label">{{ key | replace('_', ' ') | title }}</div>
+          <div class="value">{{ val }}</div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted)">No header information detected.</p>
+    {% endif %}
+  </div>
+
+  <!-- Tabs: Table | JSON -->
+  <div class="card" style="padding-bottom:0;">
+    <h2>📊 Extracted Data</h2>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('table', this)">Table View</div>
+      <div class="tab" onclick="switchTab('json', this)">Raw JSON</div>
+    </div>
+  </div>
+
+  <!-- TABLE TAB -->
+  <div class="tab-content active card" id="tab-table" style="margin-top:0;border-radius:0 var(--radius) var(--radius) var(--radius);">
+    {% if all_pickers %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Page</th>
+            {% if all_pickers | selectattr('team') | list %}<th>Team</th>{% endif %}
+            {% if all_pickers | selectattr('name') | list or all_pickers | selectattr('row_label') | list %}
+            <th>Name / Label</th>
+            {% endif %}
+            {% if all_pickers | selectattr('record_id') | list %}<th>Record ID</th>{% endif %}
+            {% if all_pickers | selectattr('start_time') | list %}<th>Start</th>{% endif %}
+            {% for h in all_headers %}
+            <th title="{{ h }}">{{ (header_labels or {})[h] if header_labels and h in header_labels else h.replace('_',' ') }}</th>
+            {% endfor %}
+            {% if all_pickers | selectattr('end_time') | list %}<th>End Time</th>{% endif %}
+            {% if all_pickers | selectattr('notes') | list %}<th>Notes</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for p in all_pickers %}
+          {# Support both new schema (fields) and old schema (quantities) #}
+          {% set cell_data = p.get('fields') or p.get('quantities') or {} %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><span class="page-label">p{{ p.get('_page', '?') }}</span></td>
+            {% if all_pickers | selectattr('team') | list %}
+            <td>
+              {% set team = p.get('team') or '' %}
+              {% if team %}
+              <span class="badge badge-{{ team | lower if team | lower in ['a','b','c'] else 'other' }}">{{ team }}</span>
+              {% else %}&mdash;{% endif %}
+            </td>
+            {% endif %}
+            {% if all_pickers | selectattr('name') | list or all_pickers | selectattr('row_label') | list %}
+            <td><strong>{{ p.get('name') or p.get('row_label') or '—' }}</strong></td>
+            {% endif %}
+            {% if all_pickers | selectattr('record_id') | list %}
+            <td>{{ p.get('record_id') or p.get('picker_no') or '—' }}</td>
+            {% endif %}
+            {% if all_pickers | selectattr('start_time') | list %}
+            <td>{{ p.get('start_time') or '—' }}</td>
+            {% endif %}
+
+            {% for h in all_headers %}
+              {% set val = cell_data.get(h) %}
+              <td class="qty-cell {% if val and '?' in val|string %}qty-ambiguous{% elif not val %}qty-empty{% endif %}">
+                {{ val if val is not none else '—' }}
+              </td>
+            {% endfor %}
+
+            {% if all_pickers | selectattr('end_time') | list %}
+            <td>{{ p.get('end_time') or '—' }}</td>
+            {% endif %}
+            {% if all_pickers | selectattr('notes') | list %}
+            <td style="white-space:normal;max-width:180px;font-size:.82rem;color:var(--muted)">
+              {{ p.get('notes') or '' }}
+            </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div style="margin-top:.85rem;font-size:.8rem;color:var(--muted);display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <span><span style="color:var(--amber);font-weight:700">123?</span> = ambiguous / low-confidence reading</span>
+      <span><span style="color:#ccc">—</span> = empty / not written</span>
+      <span><span class="page-label">p2</span> = source page</span>
+    </div>
+
+    {% else %}
+    <p style="color:var(--muted);text-align:center;padding:2rem;">
+      No picker rows were detected in this document.
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- JSON TAB -->
+  <div class="tab-content card" id="tab-json" style="margin-top:0;border-radius:0 var(--radius) var(--radius) var(--radius);">
+    <div class="json-wrap">
+      <button class="copy-btn" onclick="copyJson()">Copy</button>
+      <pre id="json-pre">{{ raw_json }}</pre>
+    </div>
+  </div>
+
+  <!-- Download buttons -->
+  <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem;">
+    <button class="btn btn-secondary" onclick="downloadJson()">⬇ Download JSON</button>
+    <a class="btn btn-excel" href="/download_excel/{{ job_id }}">
+      📊 Download Excel
+    </a>
+  </div>
+
+  {% endif %}
+
+</main>
+
+<script>
+  /* ── Drag-and-drop ──────────────────────────────────────────── */
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      document.getElementById('file-input').files = files;
+      onFileSelected(document.getElementById('file-input'));
+    }
+  });
+
+  /* ── File selected ──────────────────────────────────────────── */
+  function onFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const info = document.getElementById('file-info');
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatSize(file.size);
+    info.classList.add('visible');
+    document.getElementById('submit-btn').disabled = false;
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  }
+
+  /* ── Show spinner on submit ─────────────────────────────────── */
+  function showSpinner() {
+    document.getElementById('spinner').classList.add('visible');
+    document.getElementById('submit-btn').textContent = 'Processing…';
+  }
+
+  /* ── Tabs ───────────────────────────────────────────────────── */
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  /* ── Copy / download JSON ───────────────────────────────────── */
+  function copyJson() {
+    const text = document.getElementById('json-pre').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  function downloadJson() {
+    const text = document.getElementById('json-pre')?.textContent;
+    if (!text) return;
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(text);
+    a.download = 'extraction_result.json';
+    a.click();
+  }
+</script>
+</body>
+</html>
